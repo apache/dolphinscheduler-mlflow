@@ -1,0 +1,23 @@
+name: sklearn
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      algorithm: {type: str, default: lightgbm}
+      data_path: str
+      label_column: {type: str, default: label} 
+      model_name: str
+      param_file: {type: str, default: ""} 
+      params: {type: str, default: ""} 
+      search_params: {type: str, default: ""} 
+    command: "python train.py \
+              --algorithm {algorithm} \
+              --data_path {data_path} \
+              --label_column {label_column} \
+              --model_name {model_name} \
+              --param_file {param_file} \
+              --params {params} \
+              --search_params {search_params}"
+
