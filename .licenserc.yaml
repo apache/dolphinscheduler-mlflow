@@ -23,5 +23,7 @@ header:
   paths-ignore:
     - NOTICE
     - LICENSE
+    - '**/*.md'
+    - MLproject
 
   comment: on-failure
