@@ -20,7 +20,7 @@ github:
   homepage: https://dolphinscheduler.apache.org/
   labels:
     - dolphinscheduler
-    - MLops
+    - mlops
   enabled_merge_buttons:
     squash: true
     merge: false
