@@ -30,7 +30,6 @@ def train_xgboost(
     train_x, train_y, test_x, test_y, param_file=None, params=None, search_params=None
 ):
     pipeline_mods = []
-    mlflow.autolog()
     pipeline_mods.append(("oridinal_encoder", get_oridinal_encoder()))
     pipeline = Pipeline(steps=pipeline_mods)
 

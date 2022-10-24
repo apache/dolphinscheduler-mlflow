@@ -29,7 +29,6 @@ def train_lr(
     train_x, train_y, test_x, test_y, param_file=None, params=None, search_params=None
 ):
     pipeline_mods = []
-    mlflow.autolog()
     pipeline_mods.append(("onehot_encoder", get_onehot_encoder()))
 
     pipeline = Pipeline(steps=pipeline_mods)

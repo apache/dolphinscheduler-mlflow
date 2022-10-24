@@ -16,6 +16,7 @@
 # under the License.
 
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 
@@ -39,7 +40,10 @@ def train_model(model_cls, params, train_x, train_y):
         optimized_model = GridSearchCV(estimator=model, param_grid=params.search_params)
         optimized_model.fit(train_x, train_y)
         model = optimized_model.best_estimator_
-        print(optimized_model.cv_results_)
+        params = optimized_model.cv_results_['params']
+        mean_test_score = optimized_model.cv_results_['mean_test_score']
+        for param, score in zip(params, mean_test_score):
+            print(param, score)
     else:
         model.fit(train_x, train_y)
     return model
