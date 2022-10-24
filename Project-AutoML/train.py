@@ -49,7 +49,7 @@ def get_tool(tool_name):
     return Tool
 
 
-def create_model_version(model_name, run_id=None, auto_replace=True):
+def create_model_version(model_name, key_metrics=None, run_id=None, auto_replace=True):
     client = mlflow.tracking.MlflowClient()
     filter_string = "name='{}'".format(model_name)
     versions = client.search_model_versions(filter_string)
@@ -57,18 +57,38 @@ def create_model_version(model_name, run_id=None, auto_replace=True):
     if not versions:
         client.create_registered_model(model_name)
 
-    # TODO: 根据与上一个version对比来判断是否更换Production的模型版本
     for version in versions:
         if version.current_stage == "Production":
             client.transition_model_version_stage(
                 model_name, version=version.version, stage="Archived"
             )
 
-    uri = f"runs:/{run_id}/{ARTIFACT_TAG}"
-    mv = mlflow.register_model(uri, model_name)
-    client.transition_model_version_stage(
-        model_name, version=mv.version, stage="Production"
-    )
+    if run_id:
+        uri = f"runs:/{run_id}/{ARTIFACT_TAG}"
+        mv = mlflow.register_model(uri, model_name)
+
+        if not key_metrics:
+            client.transition_model_version_stage(
+                model_name, version=mv.version, stage="Production"
+            )
+            logger.info("register last version to Production")
+
+    if key_metrics:
+        version2metrics = []
+        versions = client.search_model_versions(filter_string)
+        for version in versions:
+            metrics = client.get_run(version.run_id).data.metrics[key_metrics]
+            version2metrics.append((version.version, metrics))
+
+        logger.info(f"version2metrics({key_metrics}): {version2metrics}")
+
+        best_version = max(version2metrics, key=lambda x: x[1])[0]
+
+        logger.info("register version: %s to Production", best_version)
+        client.transition_model_version_stage(
+            model_name, version=best_version, stage="Production"
+        )
+
     return versions
 
 
@@ -114,7 +134,8 @@ def main(
         code_path=["automl/", "predictor.py"],
     )
     if model_name:
-        create_model_version(model_name, run_id=model_info.run_id)
+        create_model_version(
+            model_name, key_metrics='f1-score', run_id=model_info.run_id)
 
 
 if __name__ == "__main__":

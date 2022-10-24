@@ -15,11 +15,21 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import logging
+
 import click
 import mlflow
 import mlflow.sklearn
 
 from core.data import load_data
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] %(name)s %(levelname)s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+logger = logging.getLogger(__name__)
 
 
 def get_training_func(algorithm):
@@ -41,7 +51,7 @@ def get_training_func(algorithm):
     return training_func
 
 
-def create_model_version(model_name, run_id=None, auto_replace=True):
+def create_model_version(model_name, key_metrics=None, run_id=None, auto_replace=True):
     client = mlflow.tracking.MlflowClient()
     filter_string = "name='{}'".format(model_name)
     versions = client.search_model_versions(filter_string)
@@ -49,18 +59,38 @@ def create_model_version(model_name, run_id=None, auto_replace=True):
     if not versions:
         client.create_registered_model(model_name)
 
-    # TODO: 根据与上一个version对比来判断是否更换Production的模型版本
     for version in versions:
         if version.current_stage == "Production":
             client.transition_model_version_stage(
                 model_name, version=version.version, stage="Archived"
             )
 
-    uri = f"runs:/{run_id}/sklearn_model"
-    mv = mlflow.register_model(uri, model_name)
-    client.transition_model_version_stage(
-        model_name, version=mv.version, stage="Production"
-    )
+    if run_id:
+        uri = f"runs:/{run_id}/sklearn_model"
+        mv = mlflow.register_model(uri, model_name)
+
+        if not key_metrics:
+            client.transition_model_version_stage(
+                model_name, version=mv.version, stage="Production"
+            )
+            logger.info("register last version to Production")
+
+    if key_metrics:
+        version2metrics = []
+        versions = client.search_model_versions(filter_string)
+        for version in versions:
+            metrics = client.get_run(version.run_id).data.metrics[key_metrics]
+            version2metrics.append((version.version, metrics))
+
+        logger.info(f"version2metrics({key_metrics}): {version2metrics}")
+
+        best_version = max(version2metrics, key=lambda x: x[1])[0]
+
+        logger.info("register version: %s to Production", best_version)
+        client.transition_model_version_stage(
+            model_name, version=best_version, stage="Production"
+        )
+
     return versions
 
 
@@ -94,7 +124,8 @@ def main(algorithm, data_path, label_column, model_name, random_state, param_fil
         mlflow.sklearn.log_model(model, artifact_path="sklearn_model")
 
     if model_name:
-        create_model_version(model_name, run_id=run.info.run_id)
+        create_model_version(
+            model_name, key_metrics='f1-score', run_id=run.info.run_id)
 
 
 if __name__ == "__main__":
