@@ -16,8 +16,6 @@
 # under the License.
 
 name: MLflow-AutoML
-channels:
-  - https://mirrors.ustc.edu.cn/anaconda/pkgs/free/
 dependencies:
   - python=3.8.2
   - pip

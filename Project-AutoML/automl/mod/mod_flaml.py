@@ -36,21 +36,23 @@ class FLAML(Tool):
     model_path = "flaml.pkl"
 
     conda_env = {
-        "channels": ["defaults", "conda-forge"],
+        "name": "MLflow-AutoML",
         "dependencies": [
             "python=3.8.2",
+            "pip",
             {
                 "pip": [
                     "mlflow",
+                    "click==8.0.",
                     "scikit-learn==0.24.2",
                     "boto3==1.22.2",
-                    "pandas==1.3.5",
+                    "pandas>=1.0.0",
                     "setuptools<59.6.0",
-                    "flaml==1.0.1",
+                    "auto-sklearn==0.14.6",
+                    "flaml==1.0.1"
                 ],
             },
-        ],
-        "name": "mlflow-env",
+        ]
     }
 
     @staticmethod
