@@ -32,7 +32,7 @@ class AutoSklearn(Tool):
 
     conda_env = {
         "dependencies": [
-            "python=3.8.2",
+            "python=3.8.10",
             "pip",
             {
                 "pip": [

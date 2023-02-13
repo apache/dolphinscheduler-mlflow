@@ -21,7 +21,7 @@ class Tool:
     conda_env = {
         "channels": ["defaults", "conda-forge"],
         "dependencies": [
-            "python=3.8.2",
+            "python=3.8.10",
             {
                 "pip": [
                     "mlflow",
